@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	survey "github.com/AlecAivazis/survey/v2"
+	pkg "github.com/areed829/mulan/pkg/bitbucket"
 	"github.com/c-bata/go-prompt"
 	"github.com/ktrysmt/go-bitbucket"
 	"github.com/lithammer/fuzzysearch/fuzzy"
@@ -56,7 +56,10 @@ var bitbucketConfigureCmd = &cobra.Command{
 	Use:   "configure",
 	Short: "Configure bitbucket",
 	Long:  `Configure bitbucket`,
-	Run:   configure,
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("configure called")
+		pkg.ConfigureBitbucket()
+	},
 }
 
 func init() {
@@ -75,44 +78,44 @@ func init() {
 	// bitbucketCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-func configure(cmd *cobra.Command, args []string) {
-	var username string
-	var password string
+// func configureBitbucket(cmd *cobra.Command, args []string) {
+// 	var username string
+// 	var password string
 
-	prompt := []*survey.Question{
-		{
-			Name:     "username",
-			Prompt:   &survey.Input{Message: "Enter username:"},
-			Validate: survey.Required,
-		},
-		{
-			Name:     "password",
-			Prompt:   &survey.Password{Message: "Enter password:"},
-			Validate: survey.Required,
-		},
-	}
+// 	prompt := []*survey.Question{
+// 		{
+// 			Name:     "username",
+// 			Prompt:   &survey.Input{Message: "Enter username:"},
+// 			Validate: survey.Required,
+// 		},
+// 		{
+// 			Name:     "password",
+// 			Prompt:   &survey.Password{Message: "Enter password:"},
+// 			Validate: survey.Required,
+// 		},
+// 	}
 
-	var answers struct {
-		Username string `survey:"username"`
-		Password string `survey:"password"`
-	}
+// 	var answers struct {
+// 		Username string `survey:"username"`
+// 		Password string `survey:"password"`
+// 	}
 
-	err := survey.Ask(prompt, &answers)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+// 	err := survey.Ask(prompt, &answers)
+// 	if err != nil {
+// 		fmt.Println(err)
+// 		return
+// 	}
 
-	username = answers.Username
-	password = answers.Password
+// 	username = answers.Username
+// 	password = answers.Password
 
-	fmt.Printf("Username: %s\nPassword: %s\n", username, password)
+// 	fmt.Printf("Username: %s\nPassword: %s\n", username, password)
 
-	// use viper to store username and password
-	// viper.Set("bitbucket.username", username)
-	// viper.Set("bitbucket.password", password)
-	// viper.WriteConfig()
-}
+// 	// use viper to store username and password
+// 	viper.Set("bitbucket.username", username)
+// 	viper.Set("bitbucket.password", password)
+// 	viper.WriteConfig()
+// }
 
 func executor(in string) {
 	for _, repo := range memberOfRepos.Items {
