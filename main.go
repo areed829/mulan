@@ -24,9 +24,5 @@ func main() {
 		panic(err)
 	}
 
-	username := viper.GetString("bitbucket.username")
-
-	fmt.Println("Username:", username)
-
 	cmd.Execute()
 }
