@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
@@ -96,7 +97,8 @@ func test() {
 	}
 
 	// Set the HTTP request headers.
-	req.Header.Set("Authorization", fmt.Sprintf("Basic %s:%s", username, password))
+	encodedAuth := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", username, password)))
+	req.Header.Set("Authorization", fmt.Sprintf("Basic %s", encodedAuth))
 
 	// Send the HTTP GET request.
 	client := &http.Client{}
