@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/areed829/mulan/cmd"
 	"github.com/areed829/mulan/pkg/config"
 	"github.com/spf13/viper"
@@ -13,8 +11,7 @@ func main() {
 	if !config.ConfigExists(configPath) {
 		err := config.CreateDefaultConfig(configPath)
 		if err != nil {
-			fmt.Println(err)
-			return
+			panic(err)
 		}
 	}
 	viper.SetConfigFile("config.yaml")

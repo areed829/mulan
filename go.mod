@@ -5,6 +5,7 @@ go 1.21.2
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/c-bata/go-prompt v0.2.6
+	github.com/fatih/color v1.15.0
 	github.com/go-git/go-git/v5 v5.9.0
 	github.com/ktrysmt/go-bitbucket v0.9.68
 	github.com/lithammer/fuzzysearch v1.1.8
@@ -21,7 +22,6 @@ require (
 	github.com/cloudflare/circl v1.3.3 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.4 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
-	github.com/fatih/color v1.15.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-git/go-billy/v5 v5.5.0 // indirect
