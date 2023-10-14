@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/fatih/color"
 	"github.com/ktrysmt/go-bitbucket"
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/ssh"
@@ -40,20 +41,42 @@ type BitbucketConfigurationSettings struct {
 
 func ConfigureBitbucket(configuration *BitbucketConfigurationSettings) {
 	if configuration.SetupUsernameAndPassword {
-		setupUsernameAndPassword()
-	}
-	if configuration.SetupSsh {
-		publicKey, _, err := createSshKeys()
+		color.White("Setting up username and password...")
+		err := setupUsernameAndPassword()
 		if err != nil {
+			color.Red("Error setting up username and password: %s", err)
 			panic(err)
 		}
-		addKeyToBitbucket(publicKey)
-		addPrivateKeyToAgent()
-		addBitbucketHostKey()
+	}
+	if configuration.SetupSsh {
+		color.White("Creating ssh key...")
+		publicKey, _, err := createSshKeys()
+		if err != nil {
+			color.Red("Error creating ssh key: %s", err)
+			panic(err)
+		}
+		color.White("Adding ssh key to bitbucket...")
+		err = addKeyToBitbucket(publicKey)
+		if err != nil {
+			color.Red("Error adding ssh key to bitbucket: %s", err)
+			panic(err)
+		}
+		color.White("Adding ssh key to ssh-agent...")
+		err = addPrivateKeyToAgent()
+		if err != nil {
+			color.Red("Error adding ssh key to ssh-agent: %s", err)
+			panic(err)
+		}
+		color.White("Adding bitbucket host key to known_hosts...")
+		err = addBitbucketHostKey()
+		if err != nil {
+			color.Red("Error adding bitbucket host key to known_hosts: %s", err)
+			panic(err)
+		}
 	}
 }
 
-func setupUsernameAndPassword() {
+func setupUsernameAndPassword() error {
 	var username string
 	var password string
 
@@ -77,8 +100,7 @@ func setupUsernameAndPassword() {
 
 	err := survey.Ask(prompt, &answers)
 	if err != nil {
-		fmt.Println(err)
-		return
+		return err
 	}
 
 	username = answers.Username
@@ -88,17 +110,17 @@ func setupUsernameAndPassword() {
 	viper.Set("bitbucket.username", username)
 	viper.Set("bitbucket.password", password)
 	viper.WriteConfig()
+	return nil
 }
 
-func addKeyToBitbucket(publickey string) {
+func addKeyToBitbucket(publickey string) error {
 	username := viper.GetString("bitbucket.username")
 	password := viper.GetString("bitbucket.password")
 
 	c := bitbucket.NewBasicAuth(username, password)
 	profile, err := c.User.Profile()
 	if err != nil {
-		fmt.Println(err)
-		return
+		return err
 	}
 
 	uuid := profile.Uuid
@@ -111,8 +133,7 @@ func addKeyToBitbucket(publickey string) {
 	// Marshal the SSH key object to JSON.
 	jsonBytes, err := json.Marshal(sshKey)
 	if err != nil {
-		fmt.Println(err)
-		return
+		return err
 	}
 
 	// Create a new HTTP POST request to the Bitbucket REST endpoint.
@@ -120,8 +141,7 @@ func addKeyToBitbucket(publickey string) {
 	requestUrl := fmt.Sprintf("https://api.bitbucket.org/2.0/users/%s/ssh-keys", uuid)
 	req, err := http.NewRequest("POST", requestUrl, bytes.NewReader(jsonBytes))
 	if err != nil {
-		fmt.Println(err)
-		return
+		return err
 	}
 
 	// Set the HTTP request headers.
@@ -133,8 +153,7 @@ func addKeyToBitbucket(publickey string) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println(err)
-		return
+		return err
 	}
 
 	// Close the HTTP response body.
@@ -142,13 +161,12 @@ func addKeyToBitbucket(publickey string) {
 
 	// Check the HTTP response status code.
 	if resp.StatusCode != 201 {
-		fmt.Printf("Error creating SSH key: %s\n", resp.Status)
-		return
+		return err
 	}
 
 	// Print the SSH key ID.
-	fmt.Printf("SSH key created successfully with ID: %s\n", resp.Header.Get("X-Request-Id"))
-
+	color.Green("SSH key created successfully with ID: %s\n", resp.Header.Get("X-Request-Id"))
+	return nil
 }
 
 func addBitbucketHostKey() error {
@@ -221,7 +239,7 @@ func createSshKeys() (string, string, error) {
 	return publicKeyString, privateKeyString, nil
 }
 
-func addPrivateKeyToAgent() {
+func addPrivateKeyToAgent() error {
 	if !isSSHAgentRunning() {
 		startSSHAgent()
 	}
@@ -230,8 +248,9 @@ func addPrivateKeyToAgent() {
 	cmd.Env = os.Environ()
 	err := cmd.Run()
 	if err != nil {
-		fmt.Println("Error adding private key to ssh-agent:", err)
+		return err
 	}
+	return nil
 }
 
 func startSSHAgent() {

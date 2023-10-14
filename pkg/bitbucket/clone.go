@@ -1,12 +1,12 @@
 package bitbucket
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/c-bata/go-prompt"
+	"github.com/fatih/color"
 	git "github.com/go-git/go-git/v5"
 	gitssh "github.com/go-git/go-git/v5/plumbing/transport/ssh"
 	"github.com/ktrysmt/go-bitbucket"
@@ -20,41 +20,44 @@ var (
 	selectedRepo  bitbucket.Repository
 )
 
-func Clone() error {
-	reposErr := setRepos()
-	if reposErr != nil {
-		return reposErr
-	}
+func Clone() {
+	err := setRepos()
+	logError(err)
 
 	promptForRepo()
 
 	privateKeyFile := filepath.Join(os.Getenv("HOME"), ".ssh", "bitbucket")
 	publicKeys, publicKeyErr := gitssh.NewPublicKeysFromFile("git", privateKeyFile, "")
-	if publicKeyErr != nil {
-		return publicKeyErr
-	}
+	logError(publicKeyErr)
 
 	sshUrl := getSshUrl()
 
-	fmt.Printf("Cloning %s\n", sshUrl)
+	color.White("Cloning %s\n", sshUrl)
 
-	homeDir, directoryErr := os.UserHomeDir()
-	if directoryErr != nil {
-		return directoryErr
-	}
+	homeDir, err := os.UserHomeDir()
+	logError(err)
+
 	clonePath := filepath.Join(homeDir, "projects", selectedRepo.Name)
-	_, cloneErr := git.PlainClone(clonePath, false, &git.CloneOptions{
+	_, err = git.PlainClone(clonePath, false, &git.CloneOptions{
 		Auth:              publicKeys,
 		URL:               sshUrl,
 		Progress:          os.Stdout,
 		RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
-		InsecureSkipTLS:   true,
 	})
-	if cloneErr != nil {
-		return cloneErr
+	if err != nil && err == git.ErrRepositoryAlreadyExists {
+		color.Red("Repository already exists")
+		return
+	} else {
+		logError(err)
 	}
+	color.Green("Successfully cloned %s\n", selectedRepo.Name)
+}
 
-	return nil
+func logError(err error) {
+	if err != nil {
+		color.Red("Error: %s", err)
+		panic(err)
+	}
 }
 
 func getSshUrl() string {

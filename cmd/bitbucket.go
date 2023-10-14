@@ -15,10 +15,7 @@ var bitbucketCloneCmd = &cobra.Command{
 	Short: "Clone a repo from bitbucket",
 	Long:  `Clone a repo from bitbucket`,
 	Run: func(cmd *cobra.Command, args []string) {
-		err := pkg.Clone()
-		if err != nil {
-			panic(err)
-		}
+		pkg.Clone()
 	},
 }
 
