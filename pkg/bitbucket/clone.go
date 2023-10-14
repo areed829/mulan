@@ -1,7 +1,6 @@
 package bitbucket
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -33,7 +32,7 @@ func Clone() error {
 	if directoryErr != nil {
 		return directoryErr
 	}
-	clonePath := filepath.Join(homeDir, "projects")
+	clonePath := filepath.Join(homeDir, "projects", selectedRepo.Name)
 	_, cloneErr := git.PlainClone(clonePath, false, &git.CloneOptions{
 		URL:      sshLink,
 		Progress: os.Stdout,
@@ -49,7 +48,6 @@ func getSshLink() string {
 	links := selectedRepo.Links
 
 	cloneLinks := links["clone"].([]interface{})
-	fmt.Println("Clone link:", cloneLinks)
 
 	var sshLink string
 	for _, cloneLink := range cloneLinks {

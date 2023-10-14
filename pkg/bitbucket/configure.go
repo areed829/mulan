@@ -49,6 +49,7 @@ func ConfigureBitbucket(configuration *BitbucketConfigurationSettings) {
 		}
 		addKeyToBitbucket(publicKey)
 		addPrivateKeyToAgent()
+		initiateFirstConnectionToBitbucket()
 	}
 }
 
@@ -189,6 +190,15 @@ func createSshKeys() (string, string, error) {
 	publicKeyString := string(publicKeyBytes)
 	privateKeyString := string(privateKeyBytes)
 	return publicKeyString, privateKeyString, nil
+}
+
+func initiateFirstConnectionToBitbucket() {
+	cmd := exec.Command("ssh", "-T", "git@bitbucket.org")
+
+	// Set the standard input/output to the current terminal
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 }
 
 func addPrivateKeyToAgent() {
