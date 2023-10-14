@@ -30,7 +30,12 @@ var bitbucketConfigureCmd = &cobra.Command{
 	Long:  `Configure bitbucket`,
 	Run: func(cmd *cobra.Command, args []string) {
 		setupSsh, _ := cmd.Flags().GetBool("ssh")
-		pkg.ConfigureBitbucket(setupSsh)
+		setupAuth, _ := cmd.Flags().GetBool("auth")
+		config := pkg.BitbucketConfigurationSettings{
+			SetupSsh:                 setupSsh,
+			SetupUsernameAndPassword: setupAuth,
+		}
+		pkg.ConfigureBitbucket(&config)
 	},
 }
 
@@ -50,4 +55,5 @@ func init() {
 	// bitbucketCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
 	bitbucketConfigureCmd.Flags().BoolP("ssh", "s", false, "Configure ssh key for bitbucket")
+	bitbucketConfigureCmd.Flags().BoolP("auth", "a", false, "Configure username and app password for bitbucket")
 }
