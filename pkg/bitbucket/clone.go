@@ -1,6 +1,7 @@
 package bitbucket
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -21,11 +22,23 @@ var (
 )
 
 func Clone() {
-	err := setRepos()
-	logError(err)
+	color.White("Grabbing available repos...")
+	setRepos()
 
+	color.White("Select a repo to clone...")
 	promptForRepo()
 
+	cloneSelectedRepo()
+}
+
+func logError(err error) {
+	if err != nil {
+		color.Red("Error: %s", err)
+		panic(err)
+	}
+}
+
+func cloneSelectedRepo() {
 	privateKeyFile := filepath.Join(os.Getenv("HOME"), ".ssh", "bitbucket")
 	publicKeys, publicKeyErr := gitssh.NewPublicKeysFromFile("git", privateKeyFile, "")
 	logError(publicKeyErr)
@@ -44,20 +57,15 @@ func Clone() {
 		Progress:          os.Stdout,
 		RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
 	})
-	if err != nil && err == git.ErrRepositoryAlreadyExists {
-		color.Red("Repository already exists")
-		return
-	} else {
-		logError(err)
-	}
-	color.Green("Successfully cloned %s\n", selectedRepo.Name)
-}
-
-func logError(err error) {
 	if err != nil {
-		color.Red("Error: %s", err)
-		panic(err)
+		if errors.Is(err, git.ErrRepositoryAlreadyExists) {
+			color.Red("Repository already exists")
+		} else {
+			logError(err)
+		}
+		return
 	}
+	color.Green("Cloned %s to %s", sshUrl, clonePath)
 }
 
 func getSshUrl() string {
@@ -74,7 +82,7 @@ func getSshUrl() string {
 	return sshUrl
 }
 
-func setRepos() error {
+func setRepos() {
 	username := viper.GetString("bitbucket.username")
 	password := viper.GetString("bitbucket.password")
 
@@ -85,16 +93,12 @@ func setRepos() error {
 	}
 
 	repos, err := c.Repositories.ListForAccount(opts)
-	if err != nil {
-		return err
-	}
+	logError(err)
 
 	memberOfRepos = *repos
 	for _, repo := range memberOfRepos.Items {
 		repoNames = append(repoNames, repo.Name)
 	}
-
-	return nil
 }
 
 func executor(in string) {
