@@ -62,16 +62,20 @@ func ConfigureBitbucket(setupSsh bool) {
 	// viper.WriteConfig()
 }
 
+type SSHKeys struct {
+	Keys []SSHKey `json:"keys"`
+}
+
+type SshKeyResponse struct {
+	Values  []interface{} `json:"values"`
+	Pagelen int           `json:"pagelen"`
+	Size    int           `json:"size"`
+	Page    int           `json:"page"`
+}
+
 type SSHKey struct {
 	Label string `json:"label"`
 	Key   string `json:"key"`
-}
-
-type SSHKeyTest struct {
-	ID    string `json:"id"`
-	Label string `json:"label"`
-	Key   string `json:"key"`
-	URL   string `json:"url"`
 }
 
 func test() {
@@ -118,7 +122,7 @@ func test() {
 	}
 
 	// Decode the JSON response body into a slice of SSHKey objects.
-	var sshKeys []SSHKeyTest
+	var sshKeys SshKeyResponse
 	err = json.NewDecoder(resp.Body).Decode(&sshKeys)
 	if err != nil {
 		fmt.Println(err)
@@ -126,7 +130,7 @@ func test() {
 	}
 
 	// Print all of the SSH keys.
-	for _, sshKey := range sshKeys {
+	for _, sshKey := range sshKeys.Values {
 		fmt.Println(sshKey)
 	}
 }
