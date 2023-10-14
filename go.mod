@@ -10,6 +10,7 @@ require (
 	github.com/lithammer/fuzzysearch v1.1.8
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.17.0
+	golang.org/x/crypto v0.13.0
 )
 
 require (
@@ -52,7 +53,6 @@ require (
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
-	golang.org/x/crypto v0.13.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
 	golang.org/x/mod v0.12.0 // indirect
 	golang.org/x/net v0.15.0 // indirect

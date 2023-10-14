@@ -49,7 +49,7 @@ func ConfigureBitbucket(configuration *BitbucketConfigurationSettings) {
 		}
 		addKeyToBitbucket(publicKey)
 		addPrivateKeyToAgent()
-		initiateFirstConnectionToBitbucket()
+		addBitbucketHostKey()
 	}
 }
 
@@ -151,6 +151,35 @@ func addKeyToBitbucket(publickey string) {
 
 }
 
+func addBitbucketHostKey() error {
+	// Use ssh-keyscan to get the host key for bitbucket.org
+	cmd := exec.Command("ssh-keyscan", "bitbucket.org")
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	// Get the path to the known_hosts file
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+	knownHostsPath := filepath.Join(home, ".ssh", "known_hosts")
+
+	// Open the known_hosts file in append mode (or create it if it doesn't exist)
+	file, err := os.OpenFile(knownHostsPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Write the host key to the known_hosts file
+	_, err = file.WriteString(out.String())
+	return err
+}
+
 func createSshKeys() (string, string, error) {
 	// Generate an ssh key
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
@@ -190,15 +219,6 @@ func createSshKeys() (string, string, error) {
 	publicKeyString := string(publicKeyBytes)
 	privateKeyString := string(privateKeyBytes)
 	return publicKeyString, privateKeyString, nil
-}
-
-func initiateFirstConnectionToBitbucket() {
-	cmd := exec.Command("ssh", "-T", "git@bitbucket.org")
-
-	// Set the standard input/output to the current terminal
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
 }
 
 func addPrivateKeyToAgent() {

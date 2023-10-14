@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-
 	pkg "github.com/areed829/mulan/pkg/bitbucket"
 	"github.com/spf13/cobra"
 )
@@ -19,7 +17,7 @@ var bitbucketCloneCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		err := pkg.Clone()
 		if err != nil {
-			fmt.Println(err)
+			panic(err)
 		}
 	},
 }

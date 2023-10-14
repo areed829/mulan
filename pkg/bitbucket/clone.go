@@ -1,12 +1,14 @@
 package bitbucket
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/c-bata/go-prompt"
 	git "github.com/go-git/go-git/v5"
+	gitssh "github.com/go-git/go-git/v5/plumbing/transport/ssh"
 	"github.com/ktrysmt/go-bitbucket"
 	"github.com/lithammer/fuzzysearch/fuzzy"
 	"github.com/spf13/viper"
@@ -26,7 +28,15 @@ func Clone() error {
 
 	promptForRepo()
 
-	sshLink := getSshLink()
+	privateKeyFile := filepath.Join(os.Getenv("HOME"), ".ssh", "bitbucket")
+	publicKeys, publicKeyErr := gitssh.NewPublicKeysFromFile("git", privateKeyFile, "")
+	if publicKeyErr != nil {
+		return publicKeyErr
+	}
+
+	sshUrl := getSshUrl()
+
+	fmt.Printf("Cloning %s\n", sshUrl)
 
 	homeDir, directoryErr := os.UserHomeDir()
 	if directoryErr != nil {
@@ -34,8 +44,11 @@ func Clone() error {
 	}
 	clonePath := filepath.Join(homeDir, "projects", selectedRepo.Name)
 	_, cloneErr := git.PlainClone(clonePath, false, &git.CloneOptions{
-		URL:      sshLink,
-		Progress: os.Stdout,
+		Auth:              publicKeys,
+		URL:               sshUrl,
+		Progress:          os.Stdout,
+		RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
+		InsecureSkipTLS:   true,
 	})
 	if cloneErr != nil {
 		return cloneErr
@@ -44,18 +57,18 @@ func Clone() error {
 	return nil
 }
 
-func getSshLink() string {
+func getSshUrl() string {
 	links := selectedRepo.Links
 
 	cloneLinks := links["clone"].([]interface{})
 
-	var sshLink string
+	var sshUrl string
 	for _, cloneLink := range cloneLinks {
 		if (cloneLink.(map[string]interface{})["name"]) == "ssh" {
-			sshLink = cloneLink.(map[string]interface{})["href"].(string)
+			sshUrl = cloneLink.(map[string]interface{})["href"].(string)
 		}
 	}
-	return sshLink
+	return sshUrl
 }
 
 func setRepos() error {
